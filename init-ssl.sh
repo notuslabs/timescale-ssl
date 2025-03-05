@@ -16,6 +16,7 @@ SSL_ROOT_CRT="$SSL_DIR/root.crt"
 SSL_V3_EXT="$SSL_DIR/v3.ext"
 
 POSTGRES_CONF_FILE="$PGDATA/postgresql.conf"
+POSTGRES_HBA_FILE="$PGDATA/pg_hba.conf"
 
 # Use sudo to create the directory as root
 sudo mkdir -p "$SSL_DIR"
@@ -55,3 +56,6 @@ ssl_cert_file = '$SSL_SERVER_CRT'
 ssl_key_file = '$SSL_SERVER_KEY'
 ssl_ca_file = '$SSL_ROOT_CRT'
 EOF
+
+# only allow SSL connections
+sed -i 's/host all all all/hostssl all all all/' $POSTGRES_HBA_FILE
