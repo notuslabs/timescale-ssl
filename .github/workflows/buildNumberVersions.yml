@@ -15,8 +15,10 @@ jobs:
       matrix:
         dockerfile:
           [
-            "Dockerfile.16",
-            "Dockerfile.17",
+            "self-signed/Dockerfile.16",
+            "self-signed/Dockerfile.17",
+            "certbot/Dockerfile.16",
+            "certbot/Dockerfile.17",
           ]
 
     steps:
@@ -42,15 +44,21 @@ jobs:
       - name: Extract version from Dockerfile name
         id: extract_version
         run: |
-          version="${{ matrix.dockerfile }}"
-          version="${version#Dockerfile.}" # Remove "Dockerfile." prefix if it exists
+          dockerfile="${{ matrix.dockerfile }}"
+          path="${dockerfile%/Dockerfile.*}"
+          version_type="-${dockerfile%/Dockerfile.*}"
+          version_type="${version_type#-self-signed}"
+          version="${dockerfile#*Dockerfile.}"
           echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "type=${version_type}" >> $GITHUB_OUTPUT
+          echo "path=${path}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Build and Publish
         uses: docker/build-push-action@v5
         with:
-          file: ${{ matrix.dockerfile }}
+          context: "{{defaultContext}}:${{ steps.extract_version.outputs.path }}"
+          file: "Dockerfile.${{ steps.extract_version.outputs.version }}"
           platforms: linux/arm64, linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ steps.extract_version.outputs.version }}
+          tags: ghcr.io/${{ github.repository }}${{ steps.extract_version.outputs.type }}:${{ steps.extract_version.outputs.version }}
